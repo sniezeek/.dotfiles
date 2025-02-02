@@ -83,3 +83,14 @@ alias runsrv="python3 manage.py runserver"
 alias tailwind="python3 manage.py tailwind start"
 export JAVA_HOME=/Users/konradsniezek/Library/Java/JavaVirtualMachines/openjdk-20.0.2/Contents/Home
 export PATH=$JAVA_HOME/bin:$PATH
+export PATH="/Users/konradsniezek/Documents/AzureFx/odin:$PATH"
+export ODIN_ROOT="/Users/konradsniezek/Documents/AzureFx/odin"
+PATH="$PATH":"$HOME/.local/scripts/"
+bindkey -s ^f "tmux-sessionizer\n"
+pf() {
+  local dir
+  dir=$(find ~/Downloads ~/Documents -type d \( -name "node_modules" -o -name ".git" -o -name "venv" \) -prune -o -type f -print | fzf | xargs dirname)
+  if [[ -n "$dir" ]]; then
+    cd "$dir"
+  fi
+}
