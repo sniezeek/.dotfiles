@@ -78,7 +78,9 @@ source $ZSH/oh-my-zsh.sh
 export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 export PATH="/Users/konradsniezek/Library/Android/sdk/tools/bin:$PATH"
 alias python='python3'
-alias vnv="source venv/bin/activate"
+alias vim='nvim'
+alias dcu='docker compose up -d --build'
+alias dcd='docker compose down'
 alias runsrv="python3 manage.py runserver"
 alias tailwind="python3 manage.py tailwind start"
 export JAVA_HOME=/Users/konradsniezek/Library/Java/JavaVirtualMachines/openjdk-20.0.2/Contents/Home
@@ -87,10 +89,73 @@ export PATH="/Users/konradsniezek/Documents/AzureFx/odin:$PATH"
 export ODIN_ROOT="/Users/konradsniezek/Documents/AzureFx/odin"
 PATH="$PATH":"$HOME/.local/scripts/"
 bindkey -s ^f "tmux-sessionizer\n"
+vnv() {
+    if [ -f venv/bin/activate ]; then
+        source venv/bin/activate
+    elif [ -f .venv/bin/activate ]; then
+        source .venv/bin/activate
+    else
+        echo "❌ Nie znaleziono venv ani .venv"
+    fi
+}
 pf() {
   local dir
-  dir=$(find ~/Downloads ~/Documents -type d \( -name "node_modules" -o -name ".git" -o -name "venv" \) -prune -o -type f -print | fzf | xargs dirname)
+  dir=$(find ~/Downloads ~/Documents ~/.config -type d \( -name "node_modules" -o -name ".git" -o -name "venv" \) -prune -o -type f -print | fzf | xargs dirname)
   if [[ -n "$dir" ]]; then
     cd "$dir"
   fi
 }
+
+work() {
+    local duration="$1"
+    clear
+    if [ -z "$duration" ]; then
+        echo "🔁 Tryb manualny — praca trwa, zakończ wciskając 'q'"
+        local key=""
+        local start_time=$(date +%s)
+        while true; do
+            printf "▶️  Pracujesz... Wciśnij 'q' aby zakończyć: "
+            IFS= read -r -k1 key
+            echo
+            if [[ "$key" == "q" ]]; then
+                local end_time=$(date +%s)
+                local elapsed=$((end_time - start_time))
+                if (( elapsed >= 3600 )); then
+                    duration=$(printf "%d h %02d min" $((elapsed / 3600)) $(( (elapsed % 3600) / 60 )))
+                else
+                    duration=$(printf "%d min" $((elapsed / 60)))
+                fi
+                break
+            fi
+        done
+    else
+        timer "$duration" || return
+    fi
+    terminal-notifier -message "Pracka" \
+        -title "$duration pracki! Czas na przerwę 😊" \
+        -sound Submarine
+    echo "📝 Co zrobiłeś przez $duration?"
+    read -r note
+    local timestamp="$(date '+%Y-%m-%d %H:%M')"
+    local entry="[$timestamp] $duration — $note"
+    osascript <<EOF
+tell application "Notes"
+    set theNote to first note whose name is "Log pracy"
+    set theText to the body of theNote
+    set the body of theNote to theText & "<br>" & "$entry"
+end tell
+EOF
+    echo "✅ Dodano wpis do notatki 'Log pracy'!"
+}
+
+rest() {
+    local duration="${1:-1h}"
+    clear
+    timer "$duration" && terminal-notifier -message "Przerwa" \
+        -title "Wracaj do roboty 😬" \
+}
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/konradsniezek/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
